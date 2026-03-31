@@ -1,0 +1,54 @@
+{
+  "version.label": {
+    "message": "当前版本",
+    "description": "The label for version current"
+  },
+  "sidebar.userSidebar.category.Getting Started": {
+    "message": "快速开始",
+    "description": "The label for category 'Getting Started' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.Administration": {
+    "message": "管理与配置",
+    "description": "The label for category 'Administration' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.Connectors": {
+    "message": "连接器",
+    "description": "The label for category 'Connectors' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.HDFS": {
+    "message": "HDFS",
+    "description": "The label for category 'HDFS' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.Hive": {
+    "message": "Hive",
+    "description": "The label for category 'Hive' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.Object Stores": {
+    "message": "对象存储",
+    "description": "The label for category 'Object Stores' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.JDBC Databases": {
+    "message": "JDBC 数据库",
+    "description": "The label for category 'JDBC Databases' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.Advanced Features": {
+    "message": "高级功能",
+    "description": "The label for category 'Advanced Features' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.Upgrading": {
+    "message": "升级指南",
+    "description": "The label for category 'Upgrading' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.category.CLI Reference": {
+    "message": "CLI 参考",
+    "description": "The label for category 'CLI Reference' in sidebar 'userSidebar'"
+  },
+  "sidebar.userSidebar.doc.HBase": {
+    "message": "HBase",
+    "description": "The label for the doc item 'HBase' in sidebar 'userSidebar', linking to the doc connectors/hbase/overview"
+  },
+  "sidebar.userSidebar.doc.Network File System": {
+    "message": "网络文件系统",
+    "description": "The label for the doc item 'Network File System' in sidebar 'userSidebar', linking to the doc connectors/nfs"
+  }
+}

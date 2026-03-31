@@ -1,0 +1,18 @@
+{
+  "title": {
+    "message": "Apache Cloudberry PXF",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "Apache Cloudberry PXF",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.Documentation": {
+    "message": "使用文档",
+    "description": "Navbar item with label Documentation"
+  },
+  "item.label.Developer Guide": {
+    "message": "开发者指南",
+    "description": "Navbar item with label Developer Guide"
+  }
+}

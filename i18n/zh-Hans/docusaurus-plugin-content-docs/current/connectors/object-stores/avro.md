@@ -1,0 +1,110 @@
+---
+title: Reading and Writing Avro Data in an Object Store
+---
+
+The PXF object store connectors support reading Avro-format data. This section describes how to use PXF to read and write Avro data in an object store, including how to create, query, and insert into an external table that references an Avro file in the store.
+
+**Note**: Accessing Avro-format data from an object store is very similar to accessing Avro-format data in HDFS. This topic identifies object store-specific information required to read Avro data, and links to the [PXF HDFS Avro documentation](../hdfs/avro.md) where appropriate for common information.
+
+
+## Prerequisites {#prereq}
+
+Ensure that you have met the PXF Object Store [Prerequisites](./overview.md#objstore_prereq) before you attempt to read data from an object store.
+
+## Working with Avro Data {#avro_work}
+
+Refer to [Working with Avro Data](../hdfs/avro.md#avro_work) in the PXF HDFS Avro documentation for a description of the Apache Avro data serialization framework.
+
+When you read or write Avro data in an object store:
+
+- If the Avro schema file resides in the object store:
+
+    - You must include the bucket in the schema file path. This bucket need not specify the same bucket as the Avro data file.
+    - The secrets that you specify in the `SERVER` configuration must provide access to both the data file and schema file buckets.
+- The schema file path must not include spaces.
+
+## Creating the External Table {#avro_cet}
+
+Use the `<objstore>:avro` profiles to read and write Avro-format files in an object store. PXF supports the following `<objstore>` profile prefixes:
+
+| Object Store  | Profile Prefix |
+|-------|-------------------------------------|
+| Azure Blob Storage   | wasbs |
+| Azure Data Lake Storage Gen2    | abfss |
+| Google Cloud Storage    | gs |
+| MinIO    | s3 |
+| S3    | s3 |
+
+The following syntax creates a Greenplum Database external table that references an Avro-format file:
+
+``` sql
+CREATE [WRITABLE] EXTERNAL TABLE <table_name>
+    ( <column_name> <data_type> [, ...] | LIKE <other_table> )
+LOCATION ('pxf://<path-to-file>?PROFILE=<objstore>:avro&SERVER=<server_name>[&<custom-option>=<value>[...]]')
+FORMAT 'CUSTOM' (FORMATTER='pxfwritable_import'|'pxfwritable_export');
+```
+
+The specific keywords and values used in the Greenplum Database [CREATE EXTERNAL TABLE](https://docs.vmware.com/en/VMware-Greenplum/6/greenplum-database/ref_guide-sql_commands-CREATE_EXTERNAL_TABLE.html) command are described in the table below.
+
+| Keyword  | Value |
+|-------|-------------------------------------|
+| \<path&#8209;to&#8209;file\>    | The path to the directory or file in the object store. When the `<server_name>` configuration includes a [`pxf.fs.basePath`](../../administration/server-configuration.md#pxf-fs-basepath) property setting, PXF considers \<path&#8209;to&#8209;file\> to be relative to the base path specified. Otherwise, PXF considers it to be an absolute path. \<path&#8209;to&#8209;file\> must not specify a relative path nor include the dollar sign (`$`) character. |
+| PROFILE=\<objstore\>:avro    | The `PROFILE` keyword must identify the specific object store. For example, `s3:avro`. |
+| SERVER=\<server_name\>    | The named server configuration that PXF uses to access the data. |
+| \<custom&#8209;option\>=\<value\> | Avro-specific custom options are described in the [PXF HDFS Avro documentation](../hdfs/avro.md#customopts). |
+| FORMAT 'CUSTOM' | Use `FORMAT` '`CUSTOM`' with `(FORMATTER='pxfwritable_export')` (write) or `(FORMATTER='pxfwritable_import')` (read).|
+
+If you are accessing an S3 object store, you can provide S3 credentials via custom options in the `CREATE EXTERNAL TABLE` command as described in [Overriding the S3 Server Configuration for External Tables](./s3-select.md#s3_override_ext).
+
+
+## Creating the Foreign Table {#avro_cfdw}
+
+Use one of the following foreign data wrappers with `format 'avro'`.
+
+| Object Store  | Foreign Data Wrapper |
+|-------|-------------------------------------|
+| Azure Blob Storage   | wasbs_pxf_fdw |
+| Azure Data Lake Storage Gen2    | abfss_pxf_fdw |
+| Google Cloud Storage    | gs_pxf_fdw |
+| MinIO    | s3_pxf_fdw |
+| S3    | s3_pxf_fdw |
+
+The following syntax creates a Greenplum Database foreign table that references an Avro-format file:
+
+``` sql
+CREATE SERVER <foreign_server> FOREIGN DATA WRAPPER <store>_pxf_fdw;
+CREATE USER MAPPING FOR <user_name> SERVER <foreign_server>;
+
+CREATE FOREIGN TABLE [ IF NOT EXISTS ] <table_name>
+    ( <column_name> <data_type> [, ...] | LIKE <other_table> )
+  SERVER <foreign_server>
+  OPTIONS ( resource '<path-to-file>', format 'avro' [, <custom-option> '<value>'[...]]);
+```
+
+| Keyword  | Value |
+|-------|-------------------------------------|
+| \<foreign_server\>    | The named server configuration that PXF uses to access the data. You can override credentials in `CREATE SERVER` statement as described in [Overriding the S3 Server Configuration for Foreign Tables](./s3-select.md#s3_override_fdw) |
+| resource \<path&#8209;to&#8209;file\>    | The path to the directory or file in the object store. When the `<server_name>` configuration includes a [`pxf.fs.basePath`](../../administration/server-configuration.md#pxf-fs-basepath) property setting, PXF considers \<path&#8209;to&#8209;file\> to be relative to the base path specified. Otherwise, PXF considers it to be an absolute path. \<path&#8209;to&#8209;file\> must not specify a relative path nor include the dollar sign (`$`) character. |
+| format 'avro'  | File format specification. |
+| \<custom&#8209;option\>=\<value\> | Avro-specific custom options are described in the [PXF HDFS Avro documentation](../hdfs/avro.md#customopts). |
+
+## Example {#example}
+
+Refer to [Example: Reading Avro Data](../hdfs/avro.md#avro_example) in the PXF HDFS Avro documentation for an Avro example. Modifications that you must make to run the example with an object store include:
+
+- Copying the file to the object store instead of HDFS. For example, to copy the file to S3:
+
+    ``` shell
+    $ aws s3 cp /tmp/pxf_avro.avro s3://BUCKET/pxf_examples/
+    ```
+
+- Using the `CREATE EXTERNAL TABLE` syntax and `LOCATION` keywords and settings described above. For example, if your server name is `s3srvcfg`:
+
+    ``` sql
+    CREATE EXTERNAL TABLE pxf_s3_avro(id bigint, username text, followers text[], fmap text, relationship text, address text)
+      LOCATION ('pxf://BUCKET/pxf_examples/pxf_avro.avro?PROFILE=s3:avro&SERVER=s3srvcfg&COLLECTION_DELIM=,&MAPKEY_DELIM=:&RECORDKEY_DELIM=:')
+    FORMAT 'CUSTOM' (FORMATTER='pxfwritable_import');
+    ```
+
+You make similar modifications to follow the steps in [Example: Writing Avro Data](../hdfs/avro.md#topic_avro_writedata).
+
