@@ -7,10 +7,10 @@ const config: Config = {
   tagline: 'Platform Extension Framework — High-Performance Federated Data Access',
   favicon: 'img/favicon.ico',
 
-  url: 'https://liuxiaoyu.github.io',
+  url: 'https://MisterRaindrop.github.io',
   baseUrl: '/cloudberry-pxf-doc/',
 
-  organizationName: 'liuxiaoyu',
+  organizationName: 'MisterRaindrop',
   projectName: 'cloudberry-pxf-doc',
 
   onBrokenLinks: 'warn',
@@ -42,7 +42,7 @@ const config: Config = {
         docs: {
           sidebarPath: './sidebars.ts',
           editUrl:
-            'https://github.com/liuxiaoyu/cloudberry-pxf-doc/tree/main/',
+            'https://github.com/MisterRaindrop/cloudberry-pxf-doc/tree/main/',
           showLastUpdateAuthor: true,
           showLastUpdateTime: true,
         },
@@ -63,7 +63,7 @@ const config: Config = {
         routeBasePath: 'developer',
         sidebarPath: './sidebarsDeveloper.ts',
         editUrl:
-          'https://github.com/liuxiaoyu/cloudberry-pxf-doc/tree/main/',
+          'https://github.com/MisterRaindrop/cloudberry-pxf-doc/tree/main/',
         showLastUpdateAuthor: true,
         showLastUpdateTime: true,
       },
