@@ -3,78 +3,87 @@ title: Troubleshooting
 sidebar_position: 8
 ---
 
-# Developer Troubleshooting
+# Troubleshooting
 
 ## Out of Memory Issues
 
-### Heap Dump on OOM
+### 
 
-Set `PXF_OOM_DUMP_PATH` in `${PXF_CONF}/conf/pxf-env.sh` to enable automatic heap dumps:
+When debugging `OutOfMemoryError`, you can set the environment variable `$PXF_OOM_DUMP_PATH` in `${PXF_CONF}/conf/pxf-env.sh`.
+This results in these flags being added during JVM startup:
 
-```bash
-export PXF_OOM_DUMP_PATH=/tmp/pxf-heapdumps
+```
+-XX:+HeapDumpOnOutOfMemoryError -XX:+HeapDumpPath=$PXF_OOM_DUMP_PATH
 ```
 
-This adds the following JVM flags:
-```
--XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=$PXF_OOM_DUMP_PATH
-```
+Heap dump files are usually large (GBs), so make sure you have enough disk space at `$PXF_OOM_DUMP_PATH` in case of an `OutOfMemoryError`.
 
-:::warning
-Heap dump files can be several GBs. Ensure sufficient disk space at the dump path.
-:::
+If `$PXF_OOM_DUMP_PATH` is a directory, a new java heap dump file will be generated at `$PXF_OOM_DUMP_PATH/java_pid<PID>.hprof` for each `OutOfMemoryError`, where `<PID>` is the process ID of the PXF server instance.
+If `$PXF_OOM_DUMP_PATH` is not a directory, a single Java heap dump file will be generated on the first `OutOfMemoryError`, but will not be overwritten on subsequent `OutOfMemoryError`s, so rename files accordingly.
 
-- If the path is a **directory**, a new dump is created per OOM event: `java_pid<PID>.hprof`
-- If the path is a **file**, only the first OOM generates a dump (subsequent dumps won't overwrite)
+### Generate a heap dump for PXF
 
-### Manual Heap Dump
+    jmap -dump:live,format=b,file=<your_location>/heap_dump "$(pgrep -f tomcat)"
 
-```bash
-jmap -dump:live,format=b,file=/tmp/heap_dump "$(pgrep -f tomcat)"
-```
+* Note: `live` will force a full garbage collection before dump
 
-The `live` option forces a full GC before the dump.
+### Collect JVM Statistics from PXF
 
-### JVM Statistics Collection
+The following command will collect Java Virtual Machine Statistics every 60
+seconds.
 
-Collect GC statistics every 60 seconds:
+     jstat -gcutil $(pgrep -f tomcat) 60000 > /tmp/jstat_pxf_1min.out &
+     
+### Restrict PXF Threads
 
-```bash
-jstat -gcutil $(pgrep -f tomcat) 60000 > /tmp/jstat_pxf_1min.out &
-```
+Alternatively you can reduce the maximum number of concurrent requests PXF can handle by setting `PXF_MAX_THREADS` in `${PXF_CONF}/conf/pxf-env.sh`.
+This would result in reduced number of PXF worker threads and if there are more incoming requests than PXF threads the request would error out as opposed to overloading the PXF JVM's memory.
 
-### Reducing Memory Pressure
+## CLI
 
-Set `PXF_MAX_THREADS` in `${PXF_CONF}/conf/pxf-env.sh` to limit concurrent request handling. Excess requests will error out instead of exhausting JVM memory.
+### Cluster commands do not work from master
 
-## CLI Issues
+You may see the following error:
 
-### Cluster Commands Fail from Coordinator
+`ERROR: pxf cluster commands should only be run from Greenplum master.`
 
-Error: `pxf cluster commands should only be run from Greenplum master`
+You will either need to change the hostname to match the `gp_segment_configuration` table entry for the master node
+or change the master hostname to match the `gp_segment_configuration` entry. Both locations need to match for
+the cluster command to succeed.
 
-The hostname must match the entry in the `gp_segment_configuration` table for the coordinator node. Either update the hostname or the table entry.
+** Note: this error was fixed in PXF Version 5.3.0
 
 ## Dataproc
 
-### Accessing Dataproc from External Networks
+### Accessing Dataproc clusters from external network
 
-Dataproc uses internal IPs for partition locations. To use hostnames instead, set in `hdfs-site.xml`:
+Dataproc uses the internal IP addresses for the partition locations. We can ask
+dataproc to use the datanode hostnames instead. We need to set a property in hdfs-site.xml 
+`dfs.client.use.datanode.hostname`=true.
 
-```xml
-<property>
-    <name>dfs.client.use.datanode.hostname</name>
-    <value>true</value>
-</property>
-```
+- `dfs.client.use.datanode.hostname`: By default HDFS
+   clients connect to DataNodes using the IP address
+   provided by the NameNode. Depending on the network
+   configuration this IP address may be unreachable by
+   the clients. The fix is letting clients perform
+   their own DNS resolution of the DataNode hostname.
+   The following setting enables this behavior.
 
-### Kerberos on Dataproc
+      <property>
+          <name>dfs.client.use.datanode.hostname</name>
+          <value>true</value>
+          <description>Whether clients should use datanode hostnames when
+              connecting to datanodes.
+          </description>
+      </property>
 
-A kerberized Dataproc cluster may start with permission checking disabled. Enable it in `hdfs-site.xml`:
+### Dataproc with Kerberos
 
-```xml
-<property>
-    <name>dfs.permissions.enabled</name>
-    <value>true</value>
-</property>
-```
+A kerberized dataproc cluster might start with permission checking turned off.
+This means that any user will be able to access any file in the HDFS cluster.
+To enable permission checking modify hdfs-site.xml
+
+      <property>
+          <name>dfs.permissions.enabled</name>
+          <value>true</value>
+      </property>
